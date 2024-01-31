@@ -1,0 +1,10 @@
+Order ,Activity                                      ,Condition                                                ,Who      ,Input                ,Output                    
+1     ,Check the defect                              ,Customer brings in a defective computer                   ,CRS      ,Defective computer   ,Repair cost calculation  
+2     ,Hand out a repair cost calculation            ,Defect checked                                            ,CRS      ,Defective computer   ,Repair cost calculation  
+3     ,Decide if costs are acceptable                ,Received repair cost calculation                          ,Customer ,Repair cost          ,Decision                  
+4     ,Take computer home unrepaired                 ,Costs are not acceptable                                  ,Customer ,Defective computer   ,Unrepaired computer      
+5     ,Check and repair the hardware                 ,Costs are acceptable and repair process continues        ,CRS      ,Defective computer   ,Repaired hardware        
+6     ,Check and configure the software              ,Costs are acceptable and repair process continues        ,CRS      ,Defective computer   ,Configured software      
+7     ,Test system functionality after hardware fix  ,Hardware has been repaired                                ,CRS      ,Repaired hardware    ,Functionality test result
+8     ,Test system functionality after software fix  ,Software has been configured                              ,CRS      ,Configured software  ,Functionality test result
+9     ,Execute another arbitrary repair activity     ,An error is detected in functionality test               ,CRS      ,Defective computer   ,Repaired computer        
