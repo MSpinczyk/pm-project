@@ -1,0 +1,13 @@
+Order,Activity,Condition,Who,Subprocess,Terminated
+0,start,,,,
+1,Receive defective computer,,Customer,,
+2,Check the defect,,CRS,,
+3,Hand out a repair cost calculation,,CRS,,
+4a,Decide that the costs are acceptable,Acceptable,Customer,yes,
+4b,Take computer home unrepaired,Not Acceptable,Customer,,yes
+5,Execute repair activities,,CRS,,
+6a,Check and repair the hardware,,CRS,,
+6b,Check and configure the software,,CRS,,
+7,Test system functionality,,CRS,,
+8a,Execute another repair activity,Error detected,CRS,,yes
+8b,Finish the repair,No error,CRS,,yes

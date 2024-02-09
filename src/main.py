@@ -1,27 +1,40 @@
-from llm_extraction import extract_process_info
-from spreadsheet_processing import create_spreadsheet, update_spreadsheet
+from llm_extraction import *
+from spreadsheet_processing import *
 from bpmn_transformation import transform_to_bpmn
 
 def main():
-    # Example workflow
-    with open('data/input_text.txt', 'r') as file:
-        text = file.read()
+    # text input (description of buisness process model)
+    text = """A customer brings in a defective computer and the
+                                CRS checks the defect and hands out a repair cost
+                                calculation back. If the customer decides that the
+                                costs are acceptable, the process continues, otherwise
+                                she takes her computer home unrepaired. The ongoing
+                                repair consists of two activities, which are executed,
+                                in an arbitrary order. The first activity is to check
+                                and repair the hardware, whereas the second activity
+                                checks and configures the software. After each of
+                                these activities, the proper system functionality
+                                is tested. If an error is detected another arbitrary
+                                repair activity is executed, otherwise the repair is
+                                finished."""
+    
+    # praticipants extraction using LLM
+    participants = participants_extraction(text)
+    
+    # svo extraction using LLM
+    svos = svo_extraction(text)
+    
+    # gateways extraction using LLM
+    gateways = gateway_extraction(text, svos)
 
-    process_info = extract_process_info(text)
+    # process extraction using LLM
+    result = extract_process_info_newest(text,participants,svos,gateways)
 
-    # For the first time
-    spreadsheet_path = 'data/extracted_info.csv'
-    create_spreadsheet(process_info).to_csv(spreadsheet_path, index=False)
-
-    # For subsequent updates
-    new_process_info = extract_process_info('New information from LLM...')
-    existing_spreadsheet = pd.read_csv(spreadsheet_path)
-    updated_spreadsheet = update_spreadsheet(existing_spreadsheet, new_process_info)
-    updated_spreadsheet.to_csv(spreadsheet_path, index=False)
-
-    # Transform to BPMN
-    bpmn_output_path = 'data/bpmn_model.bpmn'
-    transform_to_bpmn(spreadsheet_path, bpmn_output_path)
+    # saving spreadsheet in csv format
+    save_string_as_csv(result)
+    
+    # transforming spreadsheet into bpmn model
+    transform_to_bpmn("output/output.csv","output.bpmn")
 
 if __name__ == "__main__":
     main()

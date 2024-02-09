@@ -1,8 +1,7 @@
-import openai
 from openai import OpenAI
 
 def extract_process_info(text):
-    client = OpenAI(api_key='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')
+    client = OpenAI()
 
     response = client.chat.completions.create(
     model="gpt-4",
@@ -42,19 +41,7 @@ def extract_process_info(text):
         },
         {
         "role": "user",
-        "content": f"""A customer brings in a defective computer and the
-        CRS checks the defect and hands out a repair cost
-        calculation back. If the customer decides that the
-        costs are acceptable, the process continues, otherwise
-        she takes her computer home unrepaired. The ongoing
-        repair consists of two activities, which are executed,
-        in an arbitrary order. The first activity is to check
-        and repair the hardware, whereas the second activity
-        checks and configures the software. After each of
-        these activities, the proper system functionality
-        is tested. If an error is detected another arbitrary
-        repair activity is executed, otherwise the repair is
-        finished."""
+        "content": f"""{text}"""
         }
     ],
     temperature=0.7,
@@ -63,4 +50,218 @@ def extract_process_info(text):
     )
     return response.choices[0].message.content
 
-print(extract_process_info('ok'))
+def participants_extraction(text):
+    client = OpenAI()
+
+    response = client.chat.completions.create(
+    model="gpt-4",
+    messages=[
+        {
+        "role": "system",
+        "content": """You will be provided with text. Try to extract information about possible participants (people, systems or organizations which performs the
+                    tasks). Text is about buisness process model. Return only participants found in text, do not guess. Return it in format: Particpiant1, Particpiant2, ..."""
+        },
+        {
+        "role": "user",
+        "content": f"""{text}"""
+        }
+    ],
+    temperature=0.7,
+    max_tokens=512,
+    top_p=1
+    )
+    return response.choices[0].message.content
+
+def svo_extraction(text):
+    client = OpenAI()
+
+    response = client.chat.completions.create(
+    model="gpt-4",
+    messages=[
+        {
+        "role": "system",
+        "content": """You will be provided with text. Try to search of basic SVO constructs (Subject-verb-object). Return it in format: SVO: ; SVO: ; ..."""
+        },
+        {
+        "role": "user",
+        "content": f"""{text}"""
+        }
+    ],
+    temperature=0.7,
+    max_tokens=512,
+    top_p=1
+    )
+    return response.choices[0].message.content
+
+def gateway_extraction(text, svo):
+    client = OpenAI()
+
+    response = client.chat.completions.create(
+    model="gpt-4",
+    messages=[
+        {
+        "role": "system",
+        "content": """You will be provided with text and SVOs. Try to find gateway keywords that signalizes the presence of conditional 
+                        (exclusive or inclusive) and parallel gateways (example words: If, otherwise). For every svo, if no gateway then just return Gateway keyword: ; for this SVO. 
+                        Return it in format: Gateway keyword: ; Gateway keyword: ; ... Length of return should be the same as input SVO. """
+        },
+        {
+        "role": "user",
+        "content": f"""Text:{text}, SVO:{svo}"""
+        }
+    ],
+    temperature=0.7,
+    max_tokens=512,
+    top_p=1
+    )
+    return response.choices[0].message.content
+
+def extract_process_info_newest(text, participants, svo, gateway):
+    client = OpenAI()
+
+    response = client.chat.completions.create(
+    model="gpt-4",
+    messages=[
+        {
+        "role": "system",
+        "content": """You will be provided with text, particpants, SVOs and gateway kewords. Based on those informations generate a csv with columns: Order,Activity,Condition,Who,Subprocess,Terminated. 
+                    Start always with: 0,start,,,,. If there is a split for branches (gateway) from for example Order number 1, then next acctivieties have Order 2a, 2b... 
+                    (if we have for example 1 then we later can not have 1a or 1b etc.) . 
+                    The values ​​in the Orders column should be increasing.
+                    In this branch next activity will have Order 2b2, if again there will be a gateway, then we will have Orders 2b2a and 2b2b. Activity could be also 'goto 2b3'. 
+                    If there is no following Activity after some Activity then last Activity should be terminated ('yes'), if after for example 4a and 4b there is 5, and 4b activtes do not have some continuation, 
+                    then the shoud be terminated. Not all places in the table need to be filled.
+                    Try not to use participants/who in Activity names. Return result in csv format.
+                    Make sure that in column Termineted or Subprocess the 'yes' is lowercase. If you have at the end diffrent branches, all should be terminted. 
+                    Example two last 7a, 7b should be set 'yes' in Terminated column.
+                    In who column there should be participants.
+
+                    Example correct csv's, do it similar way:
+                    Order,Activity,Condition,Who,Subprocess,Terminated
+                    0,start,,,,
+                    1,Validate Passenger Ticket & Identification,,Check In Counter,,
+                    2a,Confirm Itinerary,Validity,,yes,
+                    2b,Reject Passenger,else,,,yes
+                    3,Ask Passenger for Prohibited Objects,,,,
+                    4a,Remove Prohibited Objects,Prohibited Objects,,,
+                    4b,goto 5,else,,,
+                    5,Ask Passenger for Baggages,,,,
+                    6,Weight Baggages,,,,
+                    7,Calculate Additional Fees,,,,
+                    8,Inform Passenger of Additional Fees,,,,
+                    9,Collect Payment of Fees,,,,
+                    10a,Generate and Print Boarding Pass,,,,
+                    10b1,Generate and Print Baggage Tags,,,,
+                    10b2,Identify and Move Baggages,,,,
+                    11,"Hand out Boarding Pass, Ticket and Identification",,,,yes
+
+                    Order,Activity,Condition,Who,Subprocess,Terminated
+                    0,start,,,,
+                    1,Receive Order,,,,
+                    2a1,Fill Order,Accepted,,,
+                    2a2a1,Send Invoice,,,,
+                    2a2a2,Make Payment,,,,
+                    2a2a3,Accept Payment,,,,
+                    2a2b,Ship Order,,,,
+                    2b,goto 3,Rejected,,,
+                    3,Close Order,,,,yes
+
+                    Order,Activity,Condition,Who,Subprocess,Terminated
+                    0,Receive pizza order,,,,
+                    1,Answer customer call,,,yes,
+                    2,Assign the Order,,,,
+                    3,Prepare the Pizza,,,,
+                    4,Cook the Pizza,,,,
+                    5a1,Package the Pizza,,,,
+                    5b1,Assign the Delivery,,,yes,
+                    6,Deliver the Pizza,,,,
+                    7,Receive Payment,,,,
+                    8,,,,,yes
+
+                    """
+        },
+        {
+        "role": "user",
+        "content": f"""Text:{text}, Participants:{participants}, SVO:{svo}, Gateway kewords:{gateway}"""
+        }
+    ],
+    temperature=0.3,
+    max_tokens=512,
+    top_p=1
+    )
+    return response.choices[0].message.content
+
+def update_process_info(csv, text, participants, svo, gateway):
+    client = OpenAI()
+
+    response = client.chat.completions.create(
+    model="gpt-4",
+    messages=[
+        {
+        "role": "system",
+        "content": """You will be provided with csv file with spreadsheet representatiom of buisness process model, text, particpants, SVOs and gateway kewords. Based on those informations generate a csv with columns: Order,Activity,Condition,Who,Subprocess,Terminated. 
+                    Start always with: 0,start,,,,. If there is a split for branches (gateway) from for example Order number 1, then next acctivieties have Order 2a, 2b... 
+                    (if we have for example 1 then we later can not have 1a or 1b etc.) . 
+                    The values ​​in the Orders column should be increasing.
+                    In this branch next activity will have Order 2b2, if again there will be a gateway, then we will have Orders 2b2a and 2b2b. Activity could be also 'goto 2b3'. 
+                    If there is no following Activity after some Activity then last Activity should be terminated ('yes'), if after for example 4a and 4b there is 5, and 4b activtes do not have some continuation, 
+                    then the shoud be terminated. Not all places in the table need to be filled.
+                    Try not to use participants/who in Activity names. Return result in csv format.
+                    Make sure that in column Termineted or Subprocess the 'yes' is lowercase. If you have at the end diffrent branches, all should be terminted. 
+                    Example two last 7a, 7b should be set 'yes' in Terminated column.
+                    In who column there should be participants.
+
+                    Example correct csv's, do it similar way:
+                    Order,Activity,Condition,Who,Subprocess,Terminated
+                    0,start,,,,
+                    1,Validate Passenger Ticket & Identification,,Check In Counter,,
+                    2a,Confirm Itinerary,Validity,,yes,
+                    2b,Reject Passenger,else,,,yes
+                    3,Ask Passenger for Prohibited Objects,,,,
+                    4a,Remove Prohibited Objects,Prohibited Objects,,,
+                    4b,goto 5,else,,,
+                    5,Ask Passenger for Baggages,,,,
+                    6,Weight Baggages,,,,
+                    7,Calculate Additional Fees,,,,
+                    8,Inform Passenger of Additional Fees,,,,
+                    9,Collect Payment of Fees,,,,
+                    10a,Generate and Print Boarding Pass,,,,
+                    10b1,Generate and Print Baggage Tags,,,,
+                    10b2,Identify and Move Baggages,,,,
+                    11,"Hand out Boarding Pass, Ticket and Identification",,,,yes
+
+                    Order,Activity,Condition,Who,Subprocess,Terminated
+                    0,start,,,,
+                    1,Receive Order,,,,
+                    2a1,Fill Order,Accepted,,,
+                    2a2a1,Send Invoice,,,,
+                    2a2a2,Make Payment,,,,
+                    2a2a3,Accept Payment,,,,
+                    2a2b,Ship Order,,,,
+                    2b,goto 3,Rejected,,,
+                    3,Close Order,,,,yes
+
+                    Order,Activity,Condition,Who,Subprocess,Terminated
+                    0,Receive pizza order,,,,
+                    1,Answer customer call,,,yes,
+                    2,Assign the Order,,,,
+                    3,Prepare the Pizza,,,,
+                    4,Cook the Pizza,,,,
+                    5a1,Package the Pizza,,,,
+                    5b1,Assign the Delivery,,,yes,
+                    6,Deliver the Pizza,,,,
+                    7,Receive Payment,,,,
+                    8,,,,,yes
+        """
+        },
+        {
+        "role": "user",
+        "content": f"""CSV: {csv}, Text:{text}, Participants:{participants}, SVO:{svo}, Gateway kewords:{gateway}"""
+        }
+    ],
+    temperature=0.3,
+    max_tokens=512,
+    top_p=1
+    )
+    return response.choices[0].message.content
+

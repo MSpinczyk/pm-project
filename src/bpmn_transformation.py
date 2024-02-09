@@ -1,6 +1,5 @@
 import bpmn_python.bpmn_diagram_rep as diagram
 import bpmn_python.bpmn_diagram_layouter as layouter
-
 import os
 
 def transform_to_bpmn(spreadsheet_path, bpmn_output_path):
@@ -9,4 +8,4 @@ def transform_to_bpmn(spreadsheet_path, bpmn_output_path):
     layouter.generate_layout(bpmn_graph)
     bpmn_graph.export_xml_file('output/', bpmn_output_path)
 
-transform_to_bpmn('test.csv', 'test_2.bpmn')
+transform_to_bpmn('output/output.csv', 'test_33.bpmn')
