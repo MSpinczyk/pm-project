@@ -35,4 +35,4 @@ Order,Activity,Condition,Who,Subprocess,Terminated
 
 Example generated `bpmn` model is shown below:
 
-![BPMN Diagram](https://github.com/exampleuser/pm-project/raw/main/example_bpmn.png](https://github.com/MSpinczyk/pm-project/blob/main/example.png)https://github.com/MSpinczyk/pm-project/blob/main/example.png)
+![BPMN Diagram](https://github.com/exampleuser/MSpinczyk/pm-project/blob/main/example.png)
