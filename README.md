@@ -36,3 +36,5 @@ Order,Activity,Condition,Who,Subprocess,Terminated
 Example generated `bpmn` model is shown below:
 
 ![alt text](https://github.com/MSpinczyk/pm-project/blob/main/example.png)
+
+The textual description of process and some idea comes from: https://www.researchgate.net/publication/326974252_A_Concept_for_Generating_Business_Process_Models_from_Natural_Language_Description
