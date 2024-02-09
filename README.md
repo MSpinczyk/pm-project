@@ -10,3 +10,14 @@ Preliminaries:
 https://www.mdpi.com/2076-3417/9/2/345
 https://github.com/KrzyHonk/bpmn-python 
 (check: bpmn_process_csv_import, bpmn_process_csv_export)
+
+
+
+```csv
+Task ID, Task Description, Previous Tasks
+1,Receive Order,
+2,Check Inventory,1
+3,Process Payment,1
+4,Update Inventory,2 3
+5,Dispatch Order,4
+```
